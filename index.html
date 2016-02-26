@@ -1,0 +1,355 @@
+<!DOCTYPE HTML>
+<html>
+<style type="text/css">
+body {
+  margin: 0;
+}
+#canvas-container {
+  /*border: 1px solid #888;*/
+  background: #292929;
+}
+#data-card {
+  position: absolute;
+  top: -100px;
+  min-width: 80px;
+  background: rgba(128, 128, 128, 0.5);
+  border: 1px solid rgba(128, 128, 128, 0.8);
+  border-radius: 5px;
+  color: #FFF;
+  font-size: 0.8em;
+  line-height: 1.5em;
+  padding: 0.2em 0.5em 0.2em 0.5em;
+}
+</style>
+<script src="/socket.io/socket.io.js"></script>
+<!-- <script src="/public/traceur.js"></script>
+<script src="/public/BrowserSystem.js"></script>
+<script src="/public/bootstrap.js"></script>
+<script type="module"> -->
+<script>
+//for ((i=0;i<1000;++i));do curl "http://localhost:3000/pebble?x=$((RANDOM%3000-1500))&y=$((RANDOM%2000-1000))&z=$((RANDOM%8000-4000))";done
+"use strict";
+var s = sessionStorage;
+
+class Point {
+  constructor(jsonP) {
+    let _p = (typeof(jsonP)==='string') ? JSON.parse(jsonP) : jsonP;
+    this.x = +_p.x;
+    this.y = +_p.y;
+    this.z = +_p.z;
+    return this;
+  }
+  static setViewRange(viewRange) {
+    Point.viewRange = viewRange;
+    Point.dataRange = 4000;
+    Number.prototype.toPixel = function() {
+      return (this * Point.viewRange / Point.dataRange);
+    }
+  }
+};
+
+class BufferC {
+  constructor(size) {
+    this.length = 0; // number now
+    this.size = size;// max number
+    this.data = [];
+    this.dims = ['x', 'y', 'z'];
+    this.color = {
+      'x' : 'rgb(0, 156, 255)',
+      'y' : 'rgb(255, 199, 0)',
+      'z' : 'rgb(3, 191, 30)'
+    }
+  }
+  out() {
+    if (0 == this.length)
+      return;
+    --this.length;
+    this.data.shift();
+  }
+  add(p) {
+    if (! p instanceof Point) {
+      console.log('not a Point object:', p);
+      return;
+    }
+    ++this.length;
+    this.data.push(p);
+    if (this.length > this.size)
+      this.out();
+  }
+  loadBuffer() {
+    for (let j = (s.length < this.size) ? 0 : s.length - this.size;
+        j < s.length;
+        ++j) {
+      this.add(new Point(s.getItem(j)));
+    }
+  }
+};
+
+const Wide = 200;
+// const InterSpace = 10;
+var Buffer;
+
+var Draw = new class {
+  constructor() {
+    this.ctx;
+    this.scope;
+    this.interSpace;
+    this.stage = new Set();
+    this.selectedRange = [];
+  }
+
+  handleEvent(event) {
+    switch (event.type) {
+      case 'mousemove':
+        //this.peek(event);
+        break;
+      case 'mousedown':
+        //console.log('mousedown', event.pageX, event.pageY);
+        this.selectedRange = [];
+        this.selectedRange[1] = event.pageX;
+        break;
+      case 'mouseup':
+        //console.log('mouseup', event.pageX, event.pageY);
+        this.selectedRange[2] = event.pageX;
+        break;
+      default:
+        console.log('unknow handle:', event.type);
+        return;
+    }
+    this.drawAction(event);
+  }
+
+  setContext(ctx) {
+    this.ctx = ctx;
+    ctx.setTransform(1, 0, 0, -1, 0, this.ctx.canvas.height/2);// reset to normal coordinate system
+    ctx.lineJoin = ctx.lineCap = 'round';
+    ctx.lineWidth = 0.5;
+    Point.setViewRange(ctx.canvas.height/2);
+  }
+
+  setScope(scope) {
+    Buffer = new BufferC(scope);
+    Buffer.loadBuffer();
+    this.scope = scope;
+    this.interSpace = this.ctx.canvas.width / this.scope;
+  }
+
+  drawData(){
+    let ctx = this.ctx;
+    ctx.clearRect(0, -ctx.canvas.height/2, ctx.canvas.width, ctx.canvas.height);
+    this.drawGrid();
+    this.drawLine();
+  }
+
+  drawAction(event) {
+    this.drawData();
+    [...this.stage].map(dr => dr.call(this,event));
+  }
+
+  remarkPoint(index) {
+    let ctx = this.ctx;
+    let axisX = index * this.interSpace - 1;
+    ctx.save();
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    for (let dimIndex in Buffer.dims) {
+      let dim = Buffer.dims[dimIndex];
+      ctx.strokeStyle = Buffer.color[dim];
+      ctx.strokeRect(axisX, Buffer.data[index][dim].toPixel() - 1, 2, 2);
+    }
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  drawGrid(Interv) {
+    Interv = Interv || 1000;
+    let ctx = this.ctx;
+    ctx.save();
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+    ctx.lineWidth = 0.25;
+    ctx.beginPath();
+    ctx.moveTo(0,0);
+    ctx.lineTo(ctx.canvas.width, 0);
+    ctx.stroke();
+
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+    ctx.beginPath();
+    for(let i=Interv; i<Point.dataRange; i+=Interv) {
+      let y = i.toPixel();
+      ctx.moveTo(0, y);
+      ctx.lineTo(ctx.canvas.width, y);
+      ctx.moveTo(0, -y);
+      ctx.lineTo(ctx.canvas.width, -y);
+    }
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  drawLine() {
+    let ctx = this.ctx;
+    for (let dimIndex in Buffer.dims) {
+      let dim = Buffer.dims[dimIndex];
+      ctx.strokeStyle = Buffer.color[dim];
+      ctx.beginPath();
+      let i = 0;
+      Buffer.data.forEach( point => {
+        let thisAxisX = (i++)*this.interSpace;
+        ctx.lineTo(thisAxisX, point[dim].toPixel());
+      });
+      ctx.stroke();
+    }
+  }
+
+  drawLine2() {
+    let ctx = this.ctx;
+    ctx.clearRect(0, -ctx.canvas.height/2, ctx.canvas.width, ctx.canvas.height);
+    ctx.beginPath();
+    for (let i = 1,j = (s.length < Wide) ? 1 : s.length - Wide + 1;
+        j < s.length;
+        ++i, ++j) {
+      let thisP = new Point(s.getItem(j));
+      let prevP = new Point(s.getItem(j-1));
+      let thisAxisX = i*this.interSpace;
+      let prevAxisX = thisAxisX - this.interSpace;
+      ctx.moveTo(thisAxisX, thisP.cx);
+      ctx.lineTo(prevAxisX, prevP.cx);
+      ctx.moveTo(thisAxisX, thisP.cy);
+      ctx.lineTo(prevAxisX, prevP.cy);
+      ctx.moveTo(thisAxisX, thisP.cz);
+      ctx.lineTo(prevAxisX, prevP.cz);
+      //console.log(thisP, prevP);
+    }
+    ctx.stroke();
+  }
+
+// on going
+  peek(event) {
+    let ctx = this.ctx;
+    //console.log(event.pageX, event.pageY);
+    let canvasX = event.pageX;
+    let canvasY = - event.pageY + ctx.canvas.height/2;
+    let index = Math.round(canvasX/this.interSpace);
+    //console.log(ArrayP.cx.data[index], ArrayP.cy.data[index], ArrayP.cz.data[index]);
+    ctx.save();
+    ctx.strokeStyle = '#FFF';
+    ctx.lineWidth = 0.2;
+    ctx.beginPath();
+    //// horizontal axis
+    // ctx.moveTo(0, canvasY);
+    // ctx.lineTo(ctx.canvas.width, canvasY);
+    //// vertical axis
+    ctx.moveTo(index * this.interSpace, ctx.canvas.height/2);
+    ctx.lineTo(index * this.interSpace, -ctx.canvas.height/2);
+    ctx.stroke();
+    ctx.restore();
+
+    if(!!!Buffer.data[index]) {
+      return;
+    }
+    this.remarkPoint(index);
+    let dataCard = document.getElementById('data-card');
+    let posY = event.pageY - 10 - dataCard.offsetHeight;
+    (posY < 0) && (posY = 0);
+    dataCard.style.left = event.pageX + 10 + 'px';
+    dataCard.style.top = posY + 'px';
+    dataCard.innerHTML = '<span style="color: rgb(0, 156, 255)">• </span>' + 'x:  ' + Buffer.data[index].x + '<br>' +
+                         '<span style="color: rgb(255, 199, 0)">• </span>' + 'y:  ' + Buffer.data[index].y + '<br>' +
+                         '<span style="color: rgb(3, 191, 30)">• </span>' + 'z:  ' + Buffer.data[index].z;
+  }
+
+  select(event) {
+    let range = this.selectedRange;
+    if (null == range[1] || range[1] == range[2])
+      return;
+    let toCanvasX = x => Math.round(x/this.interSpace) * this.interSpace;
+    let canvasXfrom = toCanvasX(range[1]);
+    let canvasXto;
+    if (null == range[2]) {
+      canvasXto = toCanvasX(event.pageX);
+    } else {
+      canvasXto = toCanvasX(range[2]);
+    }
+    let ctx = this.ctx;
+    ctx.save();
+    ctx.lineWidth = 0.5;
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+    ctx.strokeStyle = '#FFF';
+    ctx.beginPath();
+    [ctx.fillRect, ctx.strokeRect].map(fn => fn.call(ctx,
+      canvasXfrom,
+      -ctx.canvas.height/2,
+      canvasXto - canvasXfrom,
+      ctx.canvas.height
+    ));
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  register(e) {
+    console.log('register:', e);
+    let eventType = ['mousemove'];
+    switch (e) {
+      case 'peek':
+        //eventType.push('mousemove');
+        this.stage.add(this.peek);
+        break;
+      case 'select':
+        eventType.push('mousedown');
+        eventType.push('mouseup');
+        this.stage.add(this.select);
+        this.selectedRange = [];
+        break;
+      default:
+        return;
+    }
+    eventType.map(item => this.ctx.canvas.addEventListener(item, this, false));
+  }
+
+  deregister(e) {
+    console.log('deregister:', e);
+    let eventType = [];
+    switch (e) {
+      case 'peek':
+        //eventType.push('mousemove');
+        this.stage.delete(this.peek);
+        break;
+      case 'select':
+        eventType.push('mousedown');
+        eventType.push('mouseup');
+        this.stage.delete(this.select);
+        break;
+      default:
+        return;
+    }
+    eventType.map(item => this.ctx.canvas.removeEventListener(item, this, false));
+  }
+
+}();
+
+window.onload = () => {
+  var socket = io();
+  var canvas = document.getElementById('chart');
+  var ctx = canvas.getContext('2d');
+
+  Draw.setContext(ctx);
+  Draw.setScope(Wide);
+  Draw.register('peek');
+  Draw.register('select');
+  Draw.drawData();
+
+  socket.on('get data', function (msg) {
+    //console.log(msg);
+    s.setItem(s.length, JSON.stringify(msg));
+    Buffer.add(new Point(msg));
+    Draw.drawData();
+  });
+};
+</script>
+<body>
+<div id="canvas-container">
+  <canvas id="chart" width="1000" height="600"></canvas>
+</div>
+<div id="data-card">
+</div>
+</body>
+</html>
