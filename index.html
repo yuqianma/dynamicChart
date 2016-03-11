@@ -1,47 +1,29 @@
 <!DOCTYPE HTML>
 <html>
+<link type="text/css" rel="stylesheet" href="/public/Chart.css">
 <style type="text/css">
 body {
   margin: 0;
 }
-#canvas-container {
-  position: relative;
-  /*border: 1px solid #888;*/
-  /*background: #292929;*/
-  margin: 20px;
-}
-#canvas-container * {
-  float: left;
-}
-#canvas-container:after {
-  content: "";
-  display: block;
-  clear: both;
-}
-#data-card {
-  position: absolute;
-  top: -100px;
-  min-width: 80px;
-  background: rgba(128, 128, 128, 0.5);
-  border: 1px solid rgba(128, 128, 128, 0.8);
-  border-radius: 5px;
-  color: #FFF;
-  font-size: 0.8em;
-  line-height: 1.5em;
-  padding: 0.2em 0.5em 0.2em 0.5em;
+#chart-container {
+  width: 1000px;
+  height: 600px;
+  margin: 0 auto;
 }
 </style>
 <script src="/socket.io/socket.io.js"></script>
+<script src="/public/Chart.js"></script>
 <script src="/public/index.js"></script>
 <body>
-<div id="canvas-container">
-  <canvas id="chart" width="1000" height="600"></canvas>
-  <div id="canvas-control">
-    <button id="btn-zoom">zoom</button>
-    <button id="btn-reset">reset</button>
-    <button id="btn-clear">clear</button>
-  </div>
-  <div id="data-card"></div>
+<div id="chart-container" class="chart">
+
+</div>
+
+<div id="chart-control">
+  <button id="btn-zoom">zoom</button>
+  <button id="btn-reset">reset</button>
+  <button id="btn-clear">clear</button>
+  <button id="btn-load-data">load data</button
 </div>
 </body>
 </html>
