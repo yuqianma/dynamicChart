@@ -1,5 +1,8 @@
 <!DOCTYPE HTML>
 <html>
+<head>
+<title>Dynamic Chart</title>
+<meta name="renderer" content="webkit">
 <link type="text/css" rel="stylesheet" href="/public/Chart.css">
 <style type="text/css">
 body {
@@ -7,17 +10,44 @@ body {
   background: rgb(0, 191, 165);
   color: #fff;
 }
-h1 {
+header {
+  height: 80px;
+  background: rgb(0, 140, 121);
+  margin-bottom: 10px
+}
+header .name {
   margin-left: auto;
   margin-right: auto;
-  text-align: center;
+  width: 920px;
+  font-size: 2rem;
+  font-weight: bold;
+  line-height: 80px;
+  text-shadow: 1px 1px 5px rgba(0,0,0,0.5);
 }
+header .name::after {
+  content:'alpha';
+  position: relative;
+  top: -1rem;
+  padding: 5px;
+  margin-left: 5px;
+  font-size: 1rem;
+  border-radius: 2px;
+  background: #DD6568;
+}
+
+.addition-info {
+  margin: 5px auto;
+  display: block;
+  width: 920px;
+  color: rgb(0, 93, 80);
+}
+
 #container {
   width: 920px;
   height: 510px;
   margin: 0 auto;
 }
-#container:after {
+#container::after {
   content: '';
   display: block;
   clear: both;
@@ -26,7 +56,7 @@ h1 {
   float: left;
   width: 800px;
   height: 500px;
-  border: 5px rgb(0, 140, 121)  solid;
+  border: 5px rgb(0, 140, 121) solid;
 }
 #data-control {
   float: left;
@@ -40,9 +70,11 @@ h1 {
   border-width: 5px;
   border-style: solid;
   border-radius: 50px;
+  transition: 0.5s;
 }
 #data-control .btn:hover {
   cursor: pointer;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
 }
 #data-control #btn-load-data {
   display: table-cell;
@@ -68,12 +100,35 @@ h1 {
   border-color: rgb(255, 206, 0);
   color: rgb(255, 153, 0);
 }
+
+#install {
+  width: 920px;
+  margin: 60px auto;
+}
+.code {
+  display: block;
+  background: rgb(40, 44, 52);
+  color: rgb(217, 217, 217);
+  padding: 10px;
+  margin: 10px 0;
+}
+
+#usage {
+  width: 920px;
+  margin: 0 auto;
+}
 </style>
 <script src="/socket.io/socket.io.js"></script>
 <script src="/public/Chart.js"></script>
 <script src="/public/index.js"></script>
+</head>
 <body>
-  <h1>dynamic chart</h1>
+  <header>
+    <div class="name">dynamic chart</div>
+  </header>
+  <span class="addition-info">请用Chrome或Safari打开，抱歉暂时未兼容更多浏览器。</span>
+  <span class="addition-info">可以在图表中选择一段数据，或使用鼠标滚轮放大，试试看~ 本页未使用任何插件。</span>
+
   <div id="container">
     <div id="chart-container" class="chart">
     </div>
@@ -85,5 +140,34 @@ h1 {
       <div id="btn-clear" class="btn">clear data</div>
     </div>
   </div>
+
+  <div id="install">
+    <h1>Install is every easy</h1>
+    <h2>Step 1: add script</h2>
+      <span class="code">https://raw.githubusercontent.com/yuqianma/dynamicChart/master/public/Chart.js</span>
+    <h2>Step 2: add style</h2>
+      <span class="code">https://raw.githubusercontent.com/yuqianma/dynamicChart/master/public/Chart.css</span>
+  </div>
+
+  <div id="usage">
+    <h1>Usage:</h1>
+    <div class="code">
+      <p>var chart = Chart('chart-container', [</p>
+      <p>{x: 1, y: 2, z: 3},</p>
+      <p>{x: 4, y: 5, z: 6}</p>
+      <p>]);</p>
+      <p>// chart-container is a target div</p>
+      <p>// take in an array contains points</p>
+      <p>chart.register(['peek', 'select', 'wheel']);</p>
+      <p>// register or deregister event(s)</p>
+      <p>chart.addPoint({x: 7, y: 8, z: 9});</p>
+      <p>// add a point</p>
+      <p></p>
+      <p></p>
+      <p></p>
+    </div>
+    <h1>ongoing...</h1>
+  </div>
+
 </body>
 </html>
