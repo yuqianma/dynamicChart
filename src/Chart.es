@@ -87,6 +87,10 @@ var Draw = new class {
 	constructor() {
 		this.ctx;
 		this.dataCard;
+		this.btn = {
+			zoom: null,
+			reset: null
+		};
 		this.from;
 		this.to;
 		this._interSpace;
@@ -120,6 +124,10 @@ var Draw = new class {
 				return;
 		}
 		this.drawAction(event);
+	}
+
+	setBtn(btn) {
+		this.btn = btn;
 	}
 
 	setDataCard(dataCardDiv) {
@@ -188,13 +196,31 @@ var Draw = new class {
 		}
 	}
 
+	drawBtn() {
+		if (this.from > 0 || this.to < s.length - 1) {
+			this.btn.reset.style.display = 'inline-block';
+		} else {
+			this.btn.reset.style.display = 'none';
+		}
+
+		let range = this._selectedRange;
+		if (range.length < 2 || range[0] == range[1]) {
+			this.btn.zoom.style.display = 'none';
+		} else {
+			this.btn.zoom.style.bottom = '1em';
+			this.btn.zoom.style.left = (range[0] + range[1]) / 2 - 25 + 'px';
+			this.btn.zoom.style.display = 'inline-block';
+		}
+	}
+
 	drawData() {
-		this.dataCard.style.top = '-100px';
+		this.dataCard.style.top = '-10000px';
 		let ctx = this.ctx;
 		ctx.fillStyle = '#292929';
 		ctx.fillRect(0, -ctx.canvas.height / 2, ctx.canvas.width, ctx.canvas.height);
 		this.drawGrid();
 		this.drawLine();
+		this.drawBtn();
 	}
 
 	drawAction(event) {
@@ -406,21 +432,41 @@ var chartClass = {
 		var targetDiv = document.getElementById(targetDivId);
 		var canvas = document.createElement('canvas');
 		var dataCard = document.createElement('div');
+		var btnZoom = document.createElement('div');
+		var btnReset= document.createElement('div');
 		// need a random id
 		// canvas.id = '';
 		// dataCard.id = '';
 		dataCard.setAttribute('class', 'data-card');
-		let width = targetDiv.offsetWidth;
-		let height = targetDiv.offsetHeight;
+		btnZoom.setAttribute('class', 'btn');
+		btnReset.setAttribute('class', 'btn');
+		btnZoom.innerHTML = 'zoom';
+		btnReset.innerHTML = 'view all';
+		btnReset.style.top = '0.5em';
+		btnReset.style.left = '0.5em';
+
+		let width = targetDiv.clientWidth;
+		let height = targetDiv.clientHeight;
 		canvas.width = width;
 		canvas.height = height;
 
 		targetDiv.appendChild(canvas);
 		targetDiv.appendChild(dataCard);
+		targetDiv.appendChild(btnZoom);
+		targetDiv.appendChild(btnReset);
 
 		var ctx = canvas.getContext('2d');
 		Draw.setContext(ctx);
 		Draw.setDataCard(dataCard);
+		Draw.setBtn({
+			zoom: btnZoom,
+			reset: btnReset
+		});
+
+		btnZoom.addEventListener('click', () =>
+	    this.zoom(), false);
+		btnReset.addEventListener('click', () =>
+		  this.reset(),false);
 	},
 
 	loadData: function (data) {
@@ -479,8 +525,7 @@ var chartClass = {
 
 	clear: function () {
 		s.clear();
-		Draw.setScope(0, 0);
-		Draw.drawData();
+		this.reset();
 	},
 
 };

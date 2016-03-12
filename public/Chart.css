@@ -6,7 +6,7 @@
 
 .chart .data-card {
   position: absolute;
-  top: -100px;
+  top: -10000px;
   min-width: 80px;
   background: rgba(128, 128, 128, 0.5);
   border: 1px solid rgba(128, 128, 128, 0.8);
@@ -15,4 +15,20 @@
   font-size: 0.8em;
   line-height: 1.5em;
   padding: 0.2em 0.5em 0.2em 0.5em;
+}
+
+.chart .btn {
+  position: absolute;
+  display: none;
+  background: rgba(255, 255, 255, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  color: #FFF;
+  padding: 0.3em;
+  border-radius: 3px;
+  z-index: 10;
+}
+
+.chart .btn:hover {
+  background: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
 }

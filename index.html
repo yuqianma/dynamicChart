@@ -4,26 +4,86 @@
 <style type="text/css">
 body {
   margin: 0;
+  background: rgb(0, 191, 165);
+  color: #fff;
+}
+h1 {
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
+}
+#container {
+  width: 920px;
+  height: 510px;
+  margin: 0 auto;
+}
+#container:after {
+  content: '';
+  display: block;
+  clear: both;
 }
 #chart-container {
-  width: 1000px;
-  height: 600px;
-  margin: 0 auto;
+  float: left;
+  width: 800px;
+  height: 500px;
+  border: 5px rgb(0, 140, 121)  solid;
+}
+#data-control {
+  float: left;
+  margin: 5px;
+}
+#data-control .btn {
+  width: 90px;
+  height: 90px;
+  text-align: center;
+  line-height: 90px;
+  border-width: 5px;
+  border-style: solid;
+  border-radius: 50px;
+}
+#data-control .btn:hover {
+  cursor: pointer;
+}
+#data-control #btn-load-data {
+  display: table-cell;
+  vertical-align: middle;
+  line-height: 1em;
+  background: rgb(235, 136, 138);
+  border-color: rgb(221, 101, 104);
+  color: rgb(205, 60, 63);
+}
+#data-control #btn-load-data:hover {
+  background: rgb(221, 101, 104);
+  border-color: rgb(235, 136, 138);
+  color: rgb(205, 60, 63);
+}
+#data-control #btn-clear {
+  margin-top: 10px;
+  background: rgb(255, 206, 0);
+  border-color: rgb(255, 191, 0);
+  color: rgb(255, 153, 0);
+}
+#data-control #btn-clear:hover {
+  background: rgb(255, 191, 0);
+  border-color: rgb(255, 206, 0);
+  color: rgb(255, 153, 0);
 }
 </style>
 <script src="/socket.io/socket.io.js"></script>
 <script src="/public/Chart.js"></script>
 <script src="/public/index.js"></script>
 <body>
-<div id="chart-container" class="chart">
-
-</div>
-
-<div id="chart-control">
-  <button id="btn-zoom">zoom</button>
-  <button id="btn-reset">reset</button>
-  <button id="btn-clear">clear</button>
-  <button id="btn-load-data">load data</button
-</div>
+  <h1>dynamic chart</h1>
+  <div id="container">
+    <div id="chart-container" class="chart">
+    </div>
+    <div id="data-control">
+      <div id="btn-load-data" class="btn">
+        load data</br>
+        <span style="font-size:0.5em">(120 random)</span>
+      </div>
+      <div id="btn-clear" class="btn">clear data</div>
+    </div>
+  </div>
 </body>
 </html>
