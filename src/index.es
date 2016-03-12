@@ -14,16 +14,16 @@ var dataGenerator = (chTarget, amount, interval) => {
 }
 
 window.onload = () => {
-	var socket = io();
+	// var socket = io();
   var chart = Chart('chart-container');
 
   chart.register(['peek', 'select', 'wheel']);
 
-  // socket
-	socket.on('get data', function (msg) {
-		// console.log(msg);
-		chart.addPoint(msg);
-	});
+  // // socket
+	// socket.on('get data', function (msg) {
+	// 	// console.log(msg);
+	// 	chart.addPoint(msg);
+	// });
 
   // UI
   if (sessionStorage.length === 0) {
